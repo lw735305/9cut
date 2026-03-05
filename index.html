@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>9宫格精准切图工具 | 像素级无损分割，专为分镜与社交媒体设计</title>
+  <meta name="description" content="免费在线9宫格切图工具。完美规避边缘溢出错位，支持 16:9、9:16、1:1 等多比例像素级精准切割。纯本地浏览器运行，无需上传，100%保护您的图片隐私，支持一键打包下载全部切片。" />
+  <meta name="keywords" content="9宫格切图, 九宫格切图, 分镜切图, 朋友圈切图工具, 小红书拼图, 在线切图, 无损切图" />
+  
+  <link rel="canonical" href="https://9cut.top/" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://9cut.top/" />
+  <meta property="og:title" content="9宫格精准切图工具" />
+  <meta property="og:description" content="像素级精准切割，告别边缘溢出错位。纯本地运行，保护隐私。" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="9宫格精准切图工具" />
+  <meta name="twitter:description" content="像素级精准切割，纯本地运行，保护隐私。" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <style>
+    :root {
+      --bg: #1e1e2f;
+      --panel: #2a2a40;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #60a5fa;
+      --border: #3f3f5a;
+      --success: #10b981;
+      --error: #ef4444;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--text-main);
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .header {
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: var(--text-sub);
+      font-size: 15px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ratio-group {
+      display: inline-flex;
+      background: #1e1e2f;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .ratio-item {
+      position: relative;
+    }
+
+    .ratio-item input {
+      display: none;
+    }
+
+    .ratio-item span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .ratio-item input:checked + span {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 36px;
+      padding: 0 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #3f3f5a;
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #4f4f70;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-left: auto;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #64748b;
+    }
+    .status.ok::before { background: var(--success); }
+    .status.warn::before { background: var(--error); }
+
+    .upload-area {
+      border: 2px dashed #4f4f70;
+      border-radius: var(--radius-md);
+      background: #1e1e2f;
+      padding: 60px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 20px;
+    }
+
+    .upload-area:hover, .upload-area.active {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .upload-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .upload-text {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .upload-sub {
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .upload-area.hidden { display: none; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      display: none;
+    }
+
+    .grid.visible { display: grid; }
+
+    .cell {
+      background: #1e1e2f;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .cell:hover {
+      transform: translateY(-2px);
+      border-color: #60a5fa;
+    }
+
+    .thumb-wrap {
+      width: 100%;
+      aspect-ratio: var(--thumb-ratio, 16 / 9);
+      background: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      cursor: zoom-in;
+      transition: transform 0.3s;
+    }
+    
+    .thumb-wrap img:hover {
+      transform: scale(1.03);
+    }
+
+    .meta {
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+    }
+
+    .label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+
+    .modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal img {
+      max-width: 90%;
+      max-height: 90vh;
+      border-radius: 8px;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      color: white;
+      font-size: 32px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 8px;
+    }
+
+    @media (max-width: 640px) {
+      .toolbar { justify-content: center; }
+      .status { margin-left: 0; width: 100%; justify-content: center; }
+    }
+
+    /* 补充：页脚隐私声明的样式 */
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px dashed rgba(63, 63, 90, 0.5);
+      color: var(--text-sub);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .footer span.highlight {
+      color: var(--success);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>9宫格切图</h1>
+    </div>
+
+    <section class="panel">
+      <div class="toolbar">
+        <input id="fileInput" type="file" accept="image/*" hidden />
+        
+        <div class="ratio-group" aria-label="切图比例">
+          <label class="ratio-item">
+            <input type="radio" name="ratio" value="16:9" checked />
+            <span>16:9 横版</span>
+          </label>
+          <label class="ratio-item">
+            <input type="radio" name="ratio" value="9:16" />
+            <span>9:16 竖版</span>
+          </label>
+          <label class="ratio-item">
+            <input type="radio" name="ratio" value="1:1" />
+            <span>1:1</span>
+          </label>
+          <label class="ratio-item">
+            <input type="radio" name="ratio" value="3:4" />
+            <span>3:4</span>
+          </label>
+        </div>
+
+        <button id="reuploadBtn" class="btn btn-secondary" style="display: none;">更换图片</button>
+        <button id="downloadAllBtn" class="btn btn-primary" disabled>打包下载 ZIP</button>
+        
+        <span id="status" class="status">等待上传图片</span>
+      </div>
+
+      <div id="uploadArea" class="upload-area">
+        <span class="upload-icon">📁</span>
+        <div class="upload-text">点击上传 / 拖拽图片到这里</div>
+        <div class="upload-sub">支持 JPG, PNG, WEBP 等常见格式</div>
+      </div>
+
+      <div id="grid" class="grid"></div>
+    </section>
+    <footer class="footer">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+      <span>纯浏览器本地处理，您的图片<span class="highlight">绝不会被上传至任何服务器</span>，100% 保护隐私安全。</span>
+    </footer>
+  </div>
+
+  <div id="previewModal" class="modal">
+    <div class="modal-close" id="closeModal">&times;</div>
+    <img id="previewImg" src="" alt="大图预览" />
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const uploadArea = document.getElementById('uploadArea');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+    const reuploadBtn = document.getElementById('reuploadBtn');
+    const statusEl = document.getElementById('status');
+    const gridEl = document.getElementById('grid');
+    const ratioInputs = Array.from(document.querySelectorAll('input[name="ratio"]'));
+    
+    const modal = document.getElementById('previewModal');
+    const previewImg = document.getElementById('previewImg');
+    const closeModal = document.getElementById('closeModal');
+
+    const state = {
+      baseName: 'slice',
+      ext: 'png',
+      slices: [],
+      ratioText: '16:9',
+      ratioW: 16,
+      ratioH: 9,
+      sourceFile: null
+    };
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+    reuploadBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', onSelectFile);
+    downloadAllBtn.addEventListener('click', onDownloadAll);
+    
+    ratioInputs.forEach(input => {
+      input.addEventListener('change', onRatioChange);
+    });
+
+    closeModal.addEventListener('click', () => modal.classList.remove('active'));
+    modal.addEventListener('click', (e) => {
+      if(e.target === modal) modal.classList.remove('active');
+    });
+
+    bindDragEvents();
+
+    function setStatus(text, kind = '') {
+      statusEl.textContent = text;
+      statusEl.className = 'status';
+      if (kind) statusEl.classList.add(kind);
+    }
+
+    async function onSelectFile(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      await loadFile(file);
+    }
+
+    async function loadFile(file) {
+      if (!file || !file.type.startsWith('image/')) {
+        setStatus('格式错误，请上传图片文件', 'warn');
+        return;
+      }
+      state.sourceFile = file;
+      const [name, ext] = splitFilename(file.name);
+      state.baseName = name;
+      state.ext = ext;
+      await processCurrentFile();
+    }
+
+    function bindDragEvents() {
+      ['dragenter', 'dragover'].forEach(type => {
+        uploadArea.addEventListener(type, e => {
+          e.preventDefault();
+          uploadArea.classList.add('active');
+        });
+      });
+
+      ['dragleave', 'dragend', 'drop'].forEach(type => {
+        uploadArea.addEventListener(type, e => {
+          e.preventDefault();
+          uploadArea.classList.remove('active');
+        });
+      });
+
+      uploadArea.addEventListener('drop', async e => {
+        const file = e.dataTransfer?.files?.[0];
+        if (file) await loadFile(file);
+      });
+
+      window.addEventListener('dragover', e => e.preventDefault());
+      window.addEventListener('drop', e => e.preventDefault());
+    }
+
+    async function processCurrentFile() {
+      if (!state.sourceFile) return;
+
+      try {
+        setStatus('正在生成切图...', 'warn');
+        const bitmap = await createImageBitmap(state.sourceFile);
+        buildSlices(bitmap, state.sourceFile.type || 'image/png');
+        renderSlices();
+        
+        uploadArea.classList.add('hidden');
+        gridEl.classList.add('visible');
+        downloadAllBtn.disabled = false;
+        reuploadBtn.style.display = 'inline-flex';
+        
+        setStatus('切图完成', 'ok');
+      } catch (error) {
+        console.error(error);
+        setStatus('处理失败，请尝试其他图片', 'warn');
+      }
+    }
+
+    function onRatioChange() {
+      const selected = ratioInputs.find(item => item.checked);
+      applyRatio(selected ? selected.value : '16:9');
+      if (state.sourceFile) {
+        processCurrentFile();
+      }
+    }
+
+    function applyRatio(ratioText) {
+      const [wStr, hStr] = ratioText.split(':');
+      state.ratioText = ratioText;
+      state.ratioW = Number(wStr) || 16;
+      state.ratioH = Number(hStr) || 9;
+    }
+
+    function splitFilename(filename) {
+      const idx = filename.lastIndexOf('.');
+      if (idx <= 0) return [filename || 'image', 'png'];
+      return [filename.slice(0, idx), filename.slice(idx + 1).toLowerCase()];
+    }
+
+    function buildSlices(bitmap, mimeType) {
+      state.slices = [];
+      const targetRatio = state.ratioW / state.ratioH;
+
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 3; col++) {
+          // 1. 划分绝对安全的物理整数边界，确保 9 个格子无缝拼接且【绝不重叠】
+          const cellLeft = Math.round(col * bitmap.width / 3);
+          const cellRight = Math.round((col + 1) * bitmap.width / 3);
+          const cellTop = Math.round(row * bitmap.height / 3);
+          const cellBottom = Math.round((row + 1) * bitmap.height / 3);
+
+          // 当前格子真实的物理宽高
+          const cellW = cellRight - cellLeft;
+          const cellH = cellBottom - cellTop;
+          const cellRatio = cellW / cellH;
+
+          // 2. 在安全边界内计算符合所选比例的最大裁切框
+          let cropW = cellW;
+          let cropH = cellH;
+
+          // 加入 0.001 容差，防止浮点精度导致的误判
+          if (cellRatio > targetRatio + 0.001) {
+            // 格子偏宽：高度撑满，宽度向内收缩 (向下取整保证不越界)
+            cropH = cellH;
+            cropW = Math.floor(cropH * targetRatio);
+          } else if (cellRatio < targetRatio - 0.001) {
+            // 格子偏高：宽度撑满，高度向内收缩 (向下取整保证不越界)
+            cropW = cellW;
+            cropH = Math.floor(cropW / targetRatio);
+          }
+
+          // 3. 将裁切框在当前格子内居中
+          const offsetX = Math.floor((cellW - cropW) / 2);
+          const offsetY = Math.floor((cellH - cropH) / 2);
+
+          // 最终提取坐标：绝对边界起点 + 内部偏移量
+          const sourceX = cellLeft + offsetX;
+          const sourceY = cellTop + offsetY;
+
+          const canvas = document.createElement('canvas');
+          canvas.width = cropW;
+          canvas.height = cropH;
+          const ctx = canvas.getContext('2d');
+
+          // 提取最终完美画面
+          ctx.drawImage(
+            bitmap,
+            sourceX, sourceY, cropW, cropH, 
+            0, 0, cropW, cropH            
+          );
+
+          state.slices.push({
+            index: row * 3 + col + 1,
+            filename: `${state.baseName}_${row+1}-${col+1}.${state.ext}`,
+            dataUrl: canvas.toDataURL(mimeType, 0.95)
+          });
+        }
+      }
+    }
+
+    function renderSlices() {
+      gridEl.innerHTML = '';
+
+      state.slices.forEach(slice => {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+
+        const thumb = document.createElement('div');
+        thumb.className = 'thumb-wrap';
+        thumb.style.setProperty('--thumb-ratio', `${state.ratioW} / ${state.ratioH}`);
+        
+        const img = document.createElement('img');
+        img.src = slice.dataUrl;
+        img.title = '点击预览大图';
+        img.addEventListener('click', () => {
+          previewImg.src = slice.dataUrl;
+          modal.classList.add('active');
+        });
+        
+        thumb.appendChild(img);
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+
+        const label = document.createElement('span');
+        label.className = 'label';
+        label.textContent = `0${slice.index}`;
+
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-secondary';
+        btn.style.height = '28px';
+        btn.style.padding = '0 12px';
+        btn.style.fontSize = '12px';
+        btn.textContent = '下载';
+        btn.addEventListener('click', () => downloadSlice(slice));
+
+        meta.appendChild(label);
+        meta.appendChild(btn);
+        cell.appendChild(thumb);
+        cell.appendChild(meta);
+        gridEl.appendChild(cell);
+      });
+    }
+
+    function downloadSlice(slice) {
+      const a = document.createElement('a');
+      a.href = slice.dataUrl;
+      a.download = slice.filename;
+      a.click();
+    }
+
+    function dataURLToUint8Array(dataURL) {
+      const base64 = dataURL.split(',')[1];
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    async function onDownloadAll() {
+      if (!state.slices.length) return;
+
+      const originalText = downloadAllBtn.textContent;
+      downloadAllBtn.textContent = '正在打包...';
+      downloadAllBtn.disabled = true;
+
+      try {
+        const zip = new JSZip();
+        state.slices.forEach(slice => {
+          zip.file(slice.filename, dataURLToUint8Array(slice.dataUrl));
+        });
+
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${state.baseName}_9宫格.zip`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setStatus('打包下载成功', 'ok');
+      } catch (error) {
+        setStatus('打包失败，请尝试单张下载', 'warn');
+      } finally {
+        downloadAllBtn.textContent = originalText;
+        downloadAllBtn.disabled = false;
+      }
+    }
+
+    applyRatio('16:9');
+  </script>
+</body>
+</html>
